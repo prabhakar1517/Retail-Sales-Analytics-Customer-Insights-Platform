@@ -1,0 +1,52 @@
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# ─── Environment ─────────────────────────────────────────────────────────────
+.env
+# keep .env.example (safe — no secrets)
+
+# ─── Data directories (large files — don't commit processed data) ─────────────
+data/bronze/
+data/silver/
+data/gold/
+data/generated/
+data/powerbi_ready/
+data/.file_tracker.db
+
+# ─── JARs (downloaded by scripts/download_jars.py — don't commit binaries) ───
+jars/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ─── IDE ─────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Spark temp ──────────────────────────────────────────────────────────────
+derby.log
+metastore_db/
+spark-warehouse/
+
+# ─── Power BI ────────────────────────────────────────────────────────────────
+# Commit .pbix but not large exported files
+power_bi/*.png
+power_bi/*.pdf
+
+# ─── Keep empty directories via .gitkeep ─────────────────────────────────────
+!data/raw/.gitkeep
+!logs/.gitkeep
+!jars/.gitkeep

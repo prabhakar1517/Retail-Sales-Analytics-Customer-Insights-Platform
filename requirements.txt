@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Retail Sales Analytics Pipeline — Python Dependencies
+# Python 3.12.7  |  PySpark 3.5.1  |  Java 21.0.5
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Core Spark — must match Docker image version (apache/spark:3.5.1)
+pyspark==3.5.1
+
+# Data generation (synthetic Oracle/MySQL/CSV data)
+faker==30.8.1
+
+# AWS
+boto3==1.35.53
+botocore==1.35.53
+
+# Database connectors
+# psycopg2-binary: Redshift (Phase 6)
+psycopg2-binary==2.9.10
+# mysql-connector-python: MySQL master tables (Phase 2/3)
+mysql-connector-python==9.1.0
+# oracledb: Oracle CRM thin-mode (no Oracle Client install needed)
+oracledb==2.5.0
+# SQLAlchemy: ORM layer for data generation scripts
+SQLAlchemy==2.0.36
+
+# Data
+pandas==2.2.3
+pyarrow==17.0.0
+numpy==1.26.4
+
+# Config & environment
+pyyaml==6.0.2
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.3.3
+pytest-mock==3.14.0

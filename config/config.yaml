@@ -1,0 +1,133 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# config/config.yaml — Central project configuration
+# ${VAR} placeholders are resolved from .env at runtime by config_loader.py
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Storage mode ─────────────────────────────────────────────────────────────
+storage:
+  mode: local          # 'local' (Phases 1-5) | 's3' (Phase 6+)
+
+# ── Local paths (relative to project root) ───────────────────────────────────
+paths:
+  raw_data:           data/raw/online_retail_II.csv
+  generated:          data/generated
+  generated_sales:    data/generated/sales
+  generated_returns:  data/generated/returns
+  bronze:             data/bronze
+  bronze_sales:       data/bronze/sales
+  bronze_returns:     data/bronze/returns
+  bronze_customers:   data/bronze/customers
+  bronze_products:    data/bronze/products
+  bronze_stores:      data/bronze/stores
+  bronze_suppliers:   data/bronze/suppliers
+  bronze_promotions:  data/bronze/promotions
+  silver:             data/silver
+  silver_rejected:    data/silver/rejected
+  gold:               data/gold
+  logs:               logs
+  jars:               jars
+  file_tracker_db:    data/.file_tracker.db
+
+# ── S3 paths (used when storage.mode = 's3') ─────────────────────────────────
+s3:
+  bucket: ${S3_BUCKET}
+  region: ${AWS_REGION}
+  prefix:
+    bronze:           bronze
+    silver:           silver
+    silver_rejected:  silver/rejected
+    gold:             gold
+
+# ── Oracle XE (CRM source) ───────────────────────────────────────────────────
+oracle:
+  host:           ${ORACLE_HOST}
+  port:           ${ORACLE_PORT}
+  service:        ${ORACLE_DB}
+  user:           ${ORACLE_USER}
+  password:       ${ORACLE_PASSWORD}
+  schema:         CRM
+  table:          CUSTOMERS
+  watermark_col:  UPDATED_AT
+  jdbc_url:       "jdbc:oracle:thin:@//${ORACLE_HOST}:${ORACLE_PORT}/${ORACLE_DB}"
+  jdbc_driver:    oracle.jdbc.OracleDriver
+  fetch_size:     5000
+
+# ── MySQL (master tables) ────────────────────────────────────────────────────
+mysql:
+  host:     ${MYSQL_HOST}
+  port:     ${MYSQL_PORT}
+  database: ${MYSQL_DB}
+  user:     ${MYSQL_USER}
+  password: ${MYSQL_PASSWORD}
+  # useSSL=false OK for local Docker; enable for production
+  jdbc_url: "jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  jdbc_driver: com.mysql.cj.jdbc.Driver
+  fetch_size: 5000
+  tables:
+    - products
+    - stores
+    - suppliers
+    - promotions
+
+# ── Redshift (Phase 6) ───────────────────────────────────────────────────────
+redshift:
+  host:     ${REDSHIFT_HOST}
+  port:     ${REDSHIFT_PORT}
+  database: ${REDSHIFT_DB}
+  user:     ${REDSHIFT_USER}
+  password: ${REDSHIFT_PASSWORD}
+  iam_role: ${REDSHIFT_IAM_ROLE}
+  schema:   retail_dw
+
+# ── Spark ────────────────────────────────────────────────────────────────────
+spark:
+  app_name:             RetailAnalyticsPipeline
+  master:               ${SPARK_MASTER}
+  driver_memory:        ${SPARK_DRIVER_MEMORY}
+  executor_memory:      ${SPARK_EXECUTOR_MEMORY}
+  log_level:            WARN
+  shuffle_partitions:   8      # low value for 16 GB laptop; raise for cluster
+  adaptive_enabled:     true
+
+# ── Data generation (Phase 2) ────────────────────────────────────────────────
+generation:
+  faker_seed:        42       # fixed seed — all synthetic data is reproducible
+  num_customers:     5000
+  num_products:      500
+  num_stores:        50
+  num_suppliers:     100
+  num_promotions:    200
+  defect_rate:       0.03     # 3% deliberate defects injected
+
+# ── Sample mode (pass --sample on any script for fast dev runs) ───────────────
+sample:
+  enabled: false
+  rows:    50000
+
+# ── Silver validation rules ──────────────────────────────────────────────────
+silver:
+  # Rules applied to fact_sales rows; failed rows go to rejected
+  sales_rules:
+    require_sale_id:    true
+    require_product_id: true
+    require_store_id:   true
+    quantity_min:       1
+    price_min:          0.01
+    require_valid_date: true
+    check_product_fk:   true
+    check_store_fk:     true
+  returns_rules:
+    require_return_id:  true
+    require_sale_id:    true
+    require_product_id: true
+    quantity_min:       1
+  customer_dedup:
+    key_cols: [customer_id]
+    tiebreak_col: updated_at
+
+# ── Gold / star schema ───────────────────────────────────────────────────────
+gold:
+  dim_date_start: "2009-01-01"
+  dim_date_end:   "2012-12-31"
+  # SCD Type 2 tracking columns for dim_customer
+  scd2_track_cols: [segment, loyalty_tier, city]

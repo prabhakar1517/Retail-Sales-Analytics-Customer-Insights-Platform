@@ -1,0 +1,71 @@
+-- QUICK COPY-PASTE DAX MEASURES (One measure per block)
+-- Instructions: In Power BI, right-click '_Measures' -> 'New Measure' -> Copy 1 block -> Press Enter.
+
+-- [1] Total Sales
+Total Sales = SUM(fact_sales[net_amount])
+
+-- [2] Gross Sales
+Gross Sales = SUM(fact_sales[gross_amount])
+
+-- [3] Total Discount
+Total Discount = [Gross Sales] - [Total Sales]
+
+-- [4] Orders
+Orders = DISTINCTCOUNT(fact_sales[sale_id])
+
+-- [5] Units Sold
+Units Sold = SUM(fact_sales[quantity])
+
+-- [6] Avg Order Value
+Avg Order Value = DIVIDE([Total Sales], [Orders], 0)
+
+-- [7] Avg Selling Price
+Avg Selling Price = DIVIDE([Total Sales], [Units Sold], 0)
+
+-- [8] Basket Size
+Basket Size = DIVIDE([Units Sold], [Orders], 0)
+
+-- [9] Total Returns
+Total Returns = SUM(fact_returns[refund_amount])
+
+-- [10] Units Returned
+Units Returned = SUM(fact_returns[quantity])
+
+-- [11] Return Rate %
+Return Rate % = DIVIDE([Total Returns], [Total Sales], 0)
+
+-- [12] Net Revenue
+Net Revenue = [Total Sales] - [Total Returns]
+
+-- [13] Promo Sales
+Promo Sales = CALCULATE([Total Sales], fact_sales[promo_key] <> 0)
+
+-- [14] Promo Share %
+Promo Share % = DIVIDE([Promo Sales], [Total Sales], 0)
+
+-- [15] Sales LY (Last Year)
+Sales LY = CALCULATE([Total Sales], SAMEPERIODLASTYEAR(dim_date[full_date]))
+
+-- [16] YoY Growth %
+YoY Growth % = DIVIDE([Total Sales] - [Sales LY], [Sales LY], 0)
+
+-- [17] Customer Count
+Customer Count = DISTINCTCOUNT(fact_sales[customer_key])
+
+-- [18] Champions Count
+Champions Count = CALCULATE(COUNTROWS(customer_rfm), customer_rfm[rfm_segment] = "Champions")
+
+-- [19] Loyal Customers Count
+Loyal Customers Count = CALCULATE(COUNTROWS(customer_rfm), customer_rfm[rfm_segment] = "Loyal Customers")
+
+-- [20] Lost Customers Count
+Lost Customers Count = CALCULATE(COUNTROWS(customer_rfm), customer_rfm[rfm_segment] = "Lost Customers")
+
+-- [21] Champions Revenue
+Champions Revenue = CALCULATE([Total Sales], TREATAS(CALCULATETABLE(VALUES(customer_rfm[customer_id]), customer_rfm[rfm_segment] = "Champions"), dim_customer[customer_id]))
+
+-- [22] Champions Share %
+Champions Share % = DIVIDE([Champions Revenue], [Total Sales], 0)
+
+-- [23] Executive KPI Summary (Single Card Text)
+Executive KPI Summary = "Total Sales: " & FORMAT([Total Sales], "£#,##0") & " | Orders: " & FORMAT([Orders], "#,##0") & " | AOV: " & FORMAT([Avg Order Value], "£#,##0.00") & " | Returns: " & FORMAT([Total Returns], "£#,##0") & " | Return Rate: " & FORMAT([Return Rate %], "0.00%") & " | Net Revenue: " & FORMAT([Net Revenue], "£#,##0")

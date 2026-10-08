@@ -1,0 +1,60 @@
+// =============================================================================
+// Power Query M Scripts for Amazon Redshift / Local Parquet Import
+// =============================================================================
+
+// 1. DimDate
+let
+    Source = AmazonRedshift.Database("your-redshift-host.redshift-serverless.amazonaws.com", "dev"),
+    retail_dw = Source{[Name="retail_dw"]}[Data],
+    dim_date_Table = retail_dw{[Name="dim_date"]}[Data]
+in
+    dim_date_Table
+
+// 2. DimProduct
+let
+    Source = AmazonRedshift.Database("your-redshift-host.redshift-serverless.amazonaws.com", "dev"),
+    retail_dw = Source{[Name="retail_dw"]}[Data],
+    dim_product_Table = retail_dw{[Name="dim_product"]}[Data]
+in
+    dim_product_Table
+
+// 3. DimStore
+let
+    Source = AmazonRedshift.Database("your-redshift-host.redshift-serverless.amazonaws.com", "dev"),
+    retail_dw = Source{[Name="retail_dw"]}[Data],
+    dim_store_Table = retail_dw{[Name="dim_store"]}[Data]
+in
+    dim_store_Table
+
+// 4. DimCustomer
+let
+    Source = AmazonRedshift.Database("your-redshift-host.redshift-serverless.amazonaws.com", "dev"),
+    retail_dw = Source{[Name="retail_dw"]}[Data],
+    dim_customer_Table = retail_dw{[Name="dim_customer"]}[Data],
+    FilteredCurrent = Table.SelectRows(dim_customer_Table, each ([is_current] = 1))
+in
+    FilteredCurrent
+
+// 5. FactSales
+let
+    Source = AmazonRedshift.Database("your-redshift-host.redshift-serverless.amazonaws.com", "dev"),
+    retail_dw = Source{[Name="retail_dw"]}[Data],
+    fact_sales_Table = retail_dw{[Name="fact_sales"]}[Data]
+in
+    fact_sales_Table
+
+// 6. FactReturns
+let
+    Source = AmazonRedshift.Database("your-redshift-host.redshift-serverless.amazonaws.com", "dev"),
+    retail_dw = Source{[Name="retail_dw"]}[Data],
+    fact_returns_Table = retail_dw{[Name="fact_returns"]}[Data]
+in
+    fact_returns_Table
+
+// 7. CustomerRFM
+let
+    Source = AmazonRedshift.Database("your-redshift-host.redshift-serverless.amazonaws.com", "dev"),
+    retail_dw = Source{[Name="retail_dw"]}[Data],
+    customer_rfm_Table = retail_dw{[Name="customer_rfm"]}[Data]
+in
+    customer_rfm_Table

@@ -1,0 +1,52 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: "%(asctime)s | %(levelname)-8s | %(name)-30s | %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+  brief:
+    format: "%(levelname)-8s | %(name)s | %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    stream: ext://sys.stdout
+
+  file_rotating:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: standard
+    filename: logs/pipeline.log      # resolved to absolute path by logger.py
+    maxBytes: 10485760               # 10 MB per file
+    backupCount: 5
+    encoding: utf-8
+
+root:
+  level: DEBUG
+  handlers: [console, file_rotating]
+
+loggers:
+  # Suppress noisy Spark/Py4J output
+  pyspark:
+    level: WARN
+    propagate: false
+  py4j:
+    level: WARN
+    propagate: false
+  urllib3:
+    level: WARNING
+    propagate: false
+  boto3:
+    level: WARNING
+    propagate: false
+  botocore:
+    level: WARNING
+    propagate: false
+
+  # Project loggers (inherits from root — change level here to tune verbosity)
+  retail_pipeline:
+    level: DEBUG
+    propagate: true

@@ -1,0 +1,207 @@
+-- DAX MEASURES SPECIFICATION
+-- Retail Sales Analytics & Customer Insights Platform
+-- Schema: Star Schema (fact_sales, fact_returns, dim_date, dim_customer, etc.)
+-- Table Target: Create a dedicated table named '_Measures' in Power BI to house all measures.
+
+--------------------------------------------------------------------------------
+-- SECTION 1: CORE REVENUE & TRANSACTION VOLUME
+--------------------------------------------------------------------------------
+
+Total Sales = 
+SUM(fact_sales[net_amount])
+
+Gross Sales = 
+SUM(fact_sales[gross_amount])
+
+Total Discount = 
+[Gross Sales] - [Total Sales]
+
+Orders = 
+DISTINCTCOUNT(fact_sales[sale_id])
+
+Units Sold = 
+SUM(fact_sales[quantity])
+
+Avg Order Value = 
+DIVIDE([Total Sales], [Orders], 0)
+
+Avg Selling Price = 
+DIVIDE([Total Sales], [Units Sold], 0)
+
+Basket Size = 
+DIVIDE([Units Sold], [Orders], 0)
+
+Avg Discount Rate % = 
+DIVIDE([Total Discount], [Gross Sales], 0)
+
+
+--------------------------------------------------------------------------------
+-- SECTION 2: RETURNS, REFUNDS & REVENUE REALIZATION
+--------------------------------------------------------------------------------
+
+Total Returns = 
+SUM(fact_returns[refund_amount])
+
+Units Returned = 
+SUM(fact_returns[quantity])
+
+Return Transactions = 
+DISTINCTCOUNT(fact_returns[return_id])
+
+Return Rate % = 
+DIVIDE([Total Returns], [Total Sales], 0)
+
+Unit Return Rate % = 
+DIVIDE([Units Returned], [Units Sold], 0)
+
+Net Revenue = 
+[Total Sales] - [Total Returns]
+
+High Return Risk Flag = 
+IF([Return Rate %] >= 0.05, "High Risk (>5%)", "Normal")
+
+
+--------------------------------------------------------------------------------
+-- SECTION 3: TIME INTELLIGENCE & YOY GROWTH
+-- (Requires dim_date[full_date] marked as a Date Table in Power BI)
+--------------------------------------------------------------------------------
+
+Sales LY = 
+CALCULATE(
+    [Total Sales],
+    SAMEPERIODLASTYEAR(dim_date[full_date])
+)
+
+Sales YoY Growth = 
+[Total Sales] - [Sales LY]
+
+YoY Growth % = 
+DIVIDE([Sales YoY Growth], [Sales LY], 0)
+
+Sales MTD = 
+TOTALMTD([Total Sales], dim_date[full_date])
+
+Sales QTD = 
+TOTALQTD([Total Sales], dim_date[full_date])
+
+Sales YTD = 
+TOTALYTD([Total Sales], dim_date[full_date])
+
+Orders LY = 
+CALCULATE(
+    [Orders],
+    SAMEPERIODLASTYEAR(dim_date[full_date])
+)
+
+AOV LY = 
+CALCULATE(
+    [Avg Order Value],
+    SAMEPERIODLASTYEAR(dim_date[full_date])
+)
+
+
+--------------------------------------------------------------------------------
+-- SECTION 4: PROMOTION ANALYTICS & LIFT
+--------------------------------------------------------------------------------
+
+Promo Sales = 
+CALCULATE(
+    [Total Sales],
+    fact_sales[promo_key] <> 0
+)
+
+Non-Promo Sales = 
+CALCULATE(
+    [Total Sales],
+    fact_sales[promo_key] = 0
+)
+
+Promo Share % = 
+DIVIDE([Promo Sales], [Total Sales], 0)
+
+Promo Orders = 
+CALCULATE(
+    [Orders],
+    fact_sales[promo_key] <> 0
+)
+
+Promo Units Sold = 
+CALCULATE(
+    [Units Sold],
+    fact_sales[promo_key] <> 0
+)
+
+
+--------------------------------------------------------------------------------
+-- SECTION 5: CUSTOMER LIFETIME VALUE & RFM COHORTS
+--------------------------------------------------------------------------------
+
+Customer Count = 
+DISTINCTCOUNT(fact_sales[customer_key])
+
+Total Customers = 
+DISTINCTCOUNT(dim_customer[customer_id])
+
+Sales Per Customer = 
+DIVIDE([Total Sales], [Customer Count], 0)
+
+Orders Per Customer = 
+DIVIDE([Orders], [Customer Count], 0)
+
+Champions Count = 
+CALCULATE(
+    COUNTROWS(customer_rfm),
+    customer_rfm[rfm_segment] = "Champions"
+)
+
+Loyal Customers Count = 
+CALCULATE(
+    COUNTROWS(customer_rfm),
+    customer_rfm[rfm_segment] = "Loyal Customers"
+)
+
+Potential Loyalists Count = 
+CALCULATE(
+    COUNTROWS(customer_rfm),
+    customer_rfm[rfm_segment] = "Potential Loyalists"
+)
+
+At Risk Count = 
+CALCULATE(
+    COUNTROWS(customer_rfm),
+    customer_rfm[rfm_segment] = "At Risk"
+)
+
+Lost Customers Count = 
+CALCULATE(
+    COUNTROWS(customer_rfm),
+    customer_rfm[rfm_segment] = "Lost Customers"
+)
+
+Champions Revenue = 
+CALCULATE(
+    [Total Sales],
+    TREATAS(
+        CALCULATETABLE(
+            VALUES(customer_rfm[customer_id]),
+            customer_rfm[rfm_segment] = "Champions"
+        ),
+        dim_customer[customer_id]
+    )
+)
+
+Champions Share % = 
+DIVIDE([Champions Revenue], [Total Sales], 0)
+
+
+--------------------------------------------------------------------------------
+-- SECTION 6: EXECUTIVE KPI CALLOUT CARD (SINGLE SCALAR STRING)
+--------------------------------------------------------------------------------
+
+Executive KPI Summary = 
+"Total Sales: " & FORMAT([Total Sales], "£#,##0") & " | " &
+"Orders: " & FORMAT([Orders], "#,##0") & " | " &
+"AOV: " & FORMAT([Avg Order Value], "£#,##0.00") & " | " &
+"Returns: " & FORMAT([Total Returns], "£#,##0") & " | " &
+"Return Rate: " & FORMAT([Return Rate %], "0.00%") & " | " &
+"Net Revenue: " & FORMAT([Net Revenue], "£#,##0")
